@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: saludconnect
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: frontend }
+  template:
+    metadata:
+      labels: { app: frontend }
+    spec:
+      containers:
+        - name: frontend
+          image: saludconnect-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 80 }]
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: saludconnect
+spec:
+  type: NodePort
+  selector: { app: frontend }
+  ports:
+    - { port: 80, targetPort: 80, nodePort: 30080 }
+---
+# Network policy basica: el frontend solo habla con el backend,
+# el backend solo habla con postgres (restriccion obligatoria)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: saludconnect-network
+  namespace: saludconnect
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+  ingress:
+    - from:
+        - podSelector: {}
+  egress:
+    - to:
+        - podSelector: {}
+    - to: []  # DNS
+      ports:
+        - { port: 53, protocol: UDP }

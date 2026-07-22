@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: saludconnect
+---
+# ConfigMap: rangos clinicos configurables (restriccion obligatoria)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: saludconnect-config
+  namespace: saludconnect
+data:
+  DJANGO_DEBUG: "0"
+  POSTGRES_DB: saludconnect
+  POSTGRES_USER: salud
+  POSTGRES_HOST: postgres
+  RANGO_GLUCOSA_MIN: "70"
+  RANGO_GLUCOSA_MAX: "140"
+  RANGO_SPO2_MIN: "92"
+  RANGO_SPO2_MAX: "100"
+  RANGO_TEMPERATURA_MIN: "36.0"
+  RANGO_TEMPERATURA_MAX: "37.5"
+  RANGO_PSIS_MIN: "90"
+  RANGO_PSIS_MAX: "140"
+  RANGO_PDIA_MIN: "60"
+  RANGO_PDIA_MAX: "90"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: saludconnect-secrets
+  namespace: saludconnect
+type: Opaque
+stringData:
+  DJANGO_SECRET_KEY: "cambiar-en-produccion-clave-segura"
+  POSTGRES_PASSWORD: "salud123"

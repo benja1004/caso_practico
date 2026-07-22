@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: saludconnect
+      POSTGRES_USER: salud
+      POSTGRES_PASSWORD: salud123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U salud"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    environment:
+      DJANGO_DEBUG: "0"
+      POSTGRES_HOST: db
+      POSTGRES_DB: saludconnect
+      POSTGRES_USER: salud
+      POSTGRES_PASSWORD: salud123
+      CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:5173
+      RANGO_GLUCOSA_MIN: "70"
+      RANGO_GLUCOSA_MAX: "140"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
