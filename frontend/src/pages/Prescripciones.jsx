@@ -14,6 +14,30 @@ export default function Prescripciones() {
   const [msg, setMsg] = useState('')
   const [error, setError] = useState('')
   const esMedico = user.rol === 'MEDICO' || user.rol === 'ADMIN'
+  // Modal de verificacion por QR
+  const [verificarAbierto, setVerificarAbierto] = useState(false)
+  const [verificarCodigo, setVerificarCodigo] = useState('')
+  const [verificarResultado, setVerificarResultado] = useState(null)
+  const [verificarError, setVerificarError] = useState('')
+
+  const hacerVerificacion = async (e, cod = null) => {
+    e?.preventDefault?.()
+    setVerificarError(''); setVerificarResultado(null)
+    const codigo = (cod || verificarCodigo || '').trim().toUpperCase()
+    if (!codigo) { setVerificarError('Ingresa el código de verificación de 12 caracteres.'); return }
+    try {
+      const r = await api(`/prescripciones/verificar/?codigo=${codigo}`)
+      setVerificarResultado(r)
+    } catch (err) {
+      setVerificarError(err.data?.detail || (err.status === 404 ? 'Receta NO encontrada o código inválido.' : err.message))
+    }
+  }
+
+  const abrirVerificador = (codigo = '') => {
+    setVerificarCodigo(codigo); setVerificarResultado(null); setVerificarError(''); setVerificarAbierto(true)
+    if (codigo) setTimeout(() => hacerVerificacion(null, codigo), 100)
+  }
+  const cerrarVerificador = () => setVerificarAbierto(false)
 
   const cargar = () => api('/prescripciones/?page_size=50').then((d) => setPrescripciones(d.results || d)).catch((e) => setError(e.message))
 
@@ -45,27 +69,48 @@ export default function Prescripciones() {
   const descargarPDF = (r) => {
     const doc = new jsPDF()
     doc.setFontSize(16)
-    doc.text('SALUDCONNECT - Prescripcion Digital', 14, 16)
+    doc.text('SALUDCONNECT - Prescripción Digital', 14, 16)
     doc.setFontSize(11)
-    doc.text(`Codigo de verificacion: ${r.codigo_verificacion}`, 14, 26)
+    doc.text(`Código de verificación: ${r.codigo_verificacion}`, 14, 26)
     doc.text(`Paciente: ${r.paciente_nombre}`, 14, 33)
     doc.text(`Emitida por: ${r.medico_nombre}`, 14, 40)
     doc.text(`Fecha: ${new Date(r.fecha_emision).toLocaleString('es-PE')}`, 14, 47)
     doc.text(`Vigente hasta: ${new Date(r.vigente_hasta).toLocaleDateString('es-PE')}`, 14, 54)
+    // Tabla de medicamentos
     doc.text('Medicamentos:', 14, 64)
-    let y = 72
+    doc.setFontSize(10)
+    doc.text('Medicamento', 16, 71); doc.text('Dosis', 90, 71); doc.text('Frecuencia', 120, 71); doc.text('Duración', 160, 71)
+    doc.setDrawColor(200); doc.line(14, 73, 195, 73)
+    let y = 79
     r.detalles.forEach((d) => {
-      doc.text(`- ${d.medicamento} | ${d.dosis} | ${d.frecuencia} | ${d.duracion_dias} dias`, 20, y)
+      doc.text(String(d.medicamento).slice(0, 35), 16, y)
+      doc.text(String(d.dosis).slice(0, 25), 90, y)
+      doc.text(String(d.frecuencia).slice(0, 30), 120, y)
+      doc.text(`${d.duracion_dias} días`, 160, y)
       y += 7
     })
     doc.setFontSize(8)
     doc.text(`Firma digital (SHA-256): ${r.firma_simulada}`, 14, 285)
+    doc.text('SALUDCONNECT | Documento verificable escaneando el QR o en /prescripciones/verificar', 14, 290)
     doc.save(`prescripcion_${r.codigo_verificacion}.pdf`)
   }
 
   return (
-    <div className="grid">
-      {esMedico && (
+    <div>
+      <div className="page-head">
+        <div>
+          <h1>Prescripciones digitales</h1>
+          <div className="sub">Recetas con firma simulada (SHA-256) y código QR de verificación.</div>
+        </div>
+        <button className="btn btn-outline btn-grande" onClick={() => abrirVerificador('')}>
+          🔍 Verificar receta por QR
+        </button>
+      </div>
+      {msg && <div className="ok-banner">{msg}</div>}
+      {error && <div className="alerta">{error}</div>}
+
+      <div className="grid">
+        {esMedico && (
         <div className="card">
           <h2>Emitir prescripcion</h2>
           <form onSubmit={emitir}>
@@ -126,10 +171,70 @@ export default function Prescripciones() {
               </div>
             </div>
             <button className="btn btn-sec" onClick={() => descargarPDF(r)}>PDF</button>
+            <button className="btn btn-outline" onClick={() => abrirVerificador(r.codigo_verificacion)}>Ver documento</button>
           </div>
         ))}
         {!prescripciones.length && <p style={{ color: '#64748b' }}>No hay prescripciones.</p>}
       </div>
+      </div>
+
+      {/* Modal Verificar QR */}
+      {true && verificarAbierto && (
+        <div className="overlay"
+          onClick={(e) => e.target === e.currentTarget && cerrarVerificador()}>
+          <div className="modal">
+            <div className="modal-head">
+              <h2>🔍 Verificar autenticidad de receta</h2>
+              <button className="modal-close" onClick={cerrarVerificador}>✕</button>
+            </div>
+            <div className="modal-body">
+              <p style={{ color: '#64748b', fontSize: '0.88rem' }}>
+                Ingresa el <b>código de verificación de 12 caracteres</b> (impreso en la receta o contenido en el QR).
+                El sistema consulta la validez, vigencia y muestra el documento completo.
+              </p>
+              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <input value={verificarCodigo} placeholder="Ej. E30D9380F8F7"
+                  onChange={(e) => setVerificarCodigo(e.target.value.toUpperCase())}
+                  maxLength={12} />
+                <button className="btn" onClick={hacerVerificacion}>Verificar</button>
+              </div>
+              {verificarError && <div className="alerta" style={{ marginTop: 10 }}>{verificarError}</div>}
+              {verificarResultado && verificarResultado.valida && (
+                <div className="card" style={{ marginTop: 14, marginBottom: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                    {verificarResultado.vigente
+                      ? <span className="badge estado-CONFIRMADA">VIGENTE</span>
+                      : <span className="badge estado-CANCELADA">VENCIDA</span>}
+                    <b style={{ color: '#16a34a' }}>Receta auténtica verificada ✓</b>
+                  </div>
+                  <div className="info-grid">
+                    <div className="item"><div className="k">Código</div><div className="v">{verificarResultado.receta.codigo_verificacion}</div></div>
+                    <div className="item"><div className="k">Paciente</div><div className="v">{verificarResultado.receta.paciente_nombre}</div></div>
+                    <div className="item"><div className="k">Médico</div><div className="v">{verificarResultado.receta.medico_nombre}</div></div>
+                    <div className="item"><div className="k">Emitida</div><div className="v">{new Date(verificarResultado.receta.fecha_emision).toLocaleDateString('es-PE')}</div></div>
+                    <div className="item"><div className="k">Vigente hasta</div><div className="v">{new Date(verificarResultado.receta.vigente_hasta).toLocaleDateString('es-PE')}</div></div>
+                  </div>
+                  <h3 style={{ marginTop: 10 }}>Medicamentos recetados</h3>
+                  <table style={{ marginTop: 4 }}>
+                    <thead><tr><th>Medicamento</th><th>Dosis</th><th>Frecuencia</th><th>Duración</th></tr></thead>
+                    <tbody>
+                      {verificarResultado.receta.detalles.map((d) => (
+                        <tr key={d.id}><td>{d.medicamento}</td><td>{d.dosis}</td><td>{d.frecuencia}</td><td>{d.duracion_dias} días</td></tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div style={{ fontSize: '0.74rem', color: '#94a3b8', marginTop: 8, fontFamily: 'monospace' }}>
+                    Firma digital (SHA-256): {verificarResultado.receta.firma_simulada}
+                  </div>
+                  <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+                    <button className="btn btn-ok" onClick={() => descargarPDF(verificarResultado.receta)}>Descargar PDF</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -49,6 +49,38 @@ class CitaViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"])
+    def cambiar_estado(self, request, pk=None):
+        """Cambiar el estado de una cita (Pendiente -> Confirmada -> Atendida).
+        Solo medico/admin pueden confirmar/atender; el paciente solo puede cancelar
+        (eso se hace por /cancelar/). Aqui valida transiciones permitidas.
+        """
+        cita = self.get_object()
+        nuevo = request.data.get("estado")
+        permitidas = {
+            "PENDIENTE": ["CONFIRMADA", "CANCELADA"],
+            "CONFIRMADA": ["ATENDIDA", "CANCELADA", "REPROGRAMADA"],
+            "REPROGRAMADA": ["CONFIRMADA", "CANCELADA"],
+            "ATENDIDA": [],          # ya atendida, sin transicion
+            "CANCELADA": [],         # cancelada es estado terminal
+        }
+        if nuevo not in permitidas.get(cita.estado, []):
+            return Response({
+                "detail": f"No se puede pasar de '{cita.estado}' a '{nuevo}'. "
+                f"Transiciones validas desde '{cita.estado}': "
+                f"{permitidas.get(cita.estado) or 'ninguna (estado terminal)'}."
+            }, status=status.HTTP_409_CONFLICT)
+        cita.estado = nuevo
+        cita.save()
+        return Response(CitaSerializer(cita).data)
+
+    @action(detail=True, methods=["post"])
+    def confirmar(self, request, pk=None):
+        """Atajo: marca la cita como CONFIRMADA (solo medico/admin)."""
+        # Re-usa cambiar_estado forzando el nuevo estado
+        request._full_data = {**(request.data or {}), "estado": "CONFIRMADA"}
+        return self.cambiar_estado(request, pk=pk)
+
+    @action(detail=True, methods=["post"])
     def reprogramar(self, request, pk=None):
         cita = self.get_object()
         nueva = request.data.get("fecha_hora")

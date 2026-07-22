@@ -141,9 +141,9 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "20/minute",
-        "user": "120/minute",
-        "auth": "5/minute",  # throttling estricto en login/MFA
+        "anon": "60/minute",
+        "user": "300/minute",
+        "auth": "12/minute",  # login/MFA: holgado para la demo, sigue siendo estricto
     },
 }
 

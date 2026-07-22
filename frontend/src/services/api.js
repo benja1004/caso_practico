@@ -1,4 +1,5 @@
-// Cliente API con JWT, refresh automatico y manejo de expiracion (RNF-05)
+// Cliente API con JWT, refresh automatico, manejo de expiracion (RNF-05)
+// y manejo de throttle 429 con cuenta regresiva.
 const BASE = '/api/v1'
 
 let onSessionExpired = () => {}
@@ -29,6 +30,13 @@ async function refreshToken() {
   return true
 }
 
+// Extrae segundos de espera del mensaje de throttle de DRF
+function _segundosThrottle(mensaje) {
+  if (!mensaje) return 30
+  const m = String(mensaje).match(/(\d+)\s*segundo/i) || String(mensaje).match(/(\d+)\s*second/i)
+  return m ? parseInt(m[1]) : 30
+}
+
 export async function api(path, { method = 'GET', body, formData } = {}) {
   const headers = {}
   const token = getToken()
@@ -52,13 +60,22 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
     } else {
       clearTokens()
       onSessionExpired()
-      throw new Error('Sesion expirada (15 min de inactividad).')
+      throw new Error('Sesión expirada (15 min de inactividad). Vuelve a ingresar.')
     }
   }
 
   const data = res.status === 204 ? null : await res.json().catch(() => null)
   if (!res.ok) {
-    const msg = data?.detail || JSON.stringify(data) || `Error ${res.status}`
+    // 429: throttle -Friendly message with countdown
+    if (res.status === 429) {
+      const seg = _segundosThrottle(data?.detail)
+      const err = new Error(`Demasiadas peticiones. Reintenta en ${seg} segundo(s).`)
+      err.status = 429
+      err.retryAfter = seg
+      err.data = data
+      throw err
+    }
+    const msg = data?.detail || (data && JSON.stringify(data)) || `Error ${res.status}`
     const err = new Error(msg)
     err.status = res.status
     err.data = data
@@ -66,3 +83,6 @@ export async function api(path, { method = 'GET', body, formData } = {}) {
   }
   return data
 }
+
+// Utilidad para dormir (usada al reintentar tras 429 en el frontend)
+export const sleep = (ms) => new Promise((r) => setTimeout(r, ms))

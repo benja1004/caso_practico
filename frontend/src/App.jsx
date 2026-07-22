@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard'
 import Prescripciones from './pages/Prescripciones'
 import Derivaciones from './pages/Derivaciones'
 import Admin from './pages/Admin'
+import MFASetup from './pages/MFASetup'
 
 function PrivateRoute({ children, roles }) {
   const { user } = useAuthContext()
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="prescripciones" element={<Prescripciones />} />
         <Route path="derivaciones" element={<Derivaciones />} />
+        <Route path="mfa-setup" element={<MFASetup />} />
         <Route path="admin" element={
           <PrivateRoute roles={['ADMIN']}><Admin /></PrivateRoute>
         } />

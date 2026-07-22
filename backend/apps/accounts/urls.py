@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import (LoginView, MFAVerifyView, MeView, UsuarioViewSet,
+from .views import (LoginView, MFAVerifyView, MeView, MFASetupView, UsuarioViewSet,
                     CentroSaludViewSet, EspecialidadViewSet, PerfilMedicoViewSet)
 
 # Rutas de autenticacion (montadas en /api/v1/auth/)
@@ -13,6 +13,7 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("mfa/", MFAVerifyView.as_view(), name="mfa"),
     path("me/", MeView.as_view(), name="me"),
+    path("me/mfa-setup/", MFASetupView.as_view(), name="mfa-setup"),
     path("refresh/", TokenRefreshView.as_view(), name="refresh"),
     path("", include(auth_router.urls)),
 ]

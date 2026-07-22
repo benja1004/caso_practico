@@ -10,6 +10,10 @@ const RANGOS = {
   TEMPERATURA: { min: 36, max: 37.5 },
 }
 
+function unidadPorTipo(t) {
+  return ({ GLUCOSA: 'mg/dL', SPO2: '%', TEMPERATURA: '°C', PRESION: 'mmHg' })[t] || ''
+}
+
 export default function Dashboard() {
   const { user } = useAuthContext()
   const [pacientes, setPacientes] = useState([])
@@ -62,18 +66,43 @@ export default function Dashboard() {
     doc.text(`Paciente: ${pac?.nombre_completo || ''} (DNI ${pac?.dni || ''})`, 14, 24)
     doc.text(`Condiciones: ${(pac?.condiciones || []).map((c) => c.nombre).join(', ') || '-'}`, 14, 31)
     doc.text(`Generado por: ${user.first_name} ${user.last_name} (${user.rol})`, 14, 38)
-    let y = 48
+    doc.text(`Generado el: ${new Date().toLocaleString('es-PE')}`, 14, 45)
+
+    // Tabla de datos por tipo de signo
+    let y = 56
     Object.entries(series).forEach(([t, pts]) => {
-      if (y > 270) { doc.addPage(); y = 20 }
-      doc.text(`${t}: ${pts.length} registros`, 14, y)
-      y += 7
+      if (y > 250) { doc.addPage(); y = 20 }
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold')
+      doc.text(`${t} (${pts.length} registros)`, 14, y)
+      y += 6
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal')
+      // Cabecera de tabla
+      doc.text('Fecha', 14, y); doc.text('Valor', 70, y); doc.text('Alerta', 110, y)
+      doc.setDrawColor(200); doc.line(14, y + 1, 180, y + 1)
+      y += 5
+      pts.slice(-25).forEach((p) => {  // ultimos 25 para no desbordar
+        if (y > 280) { doc.addPage(); y = 20 }
+        const fecha = new Date(p.fecha).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+        const valor = p.sistolica ? `${p.sistolica}/${p.diastolica}` : `${p.valor} (${unidadPorTipo(t)})`
+        doc.text(fecha, 14, y); doc.text(String(valor), 70, y)
+        doc.text(p.en_alerta ? 'FUERA DE RANGO' : 'OK', 110, y)
+        y += 5
+      })
+      y += 6
     })
+
+    // Imagen del grafico actual
     const canvas = document.querySelector('.chart')
     if (canvas) {
-      doc.addPage()
-      doc.text(`Grafico: ${tipo}`, 14, 15)
-      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 14, 22, 180, 70)
+      if (y > 200) doc.addPage()
+      doc.setFontSize(12); doc.setFont('helvetica', 'bold')
+      doc.text(`Gráfico: ${tipo}`, 14, y + 4)
+      doc.addImage(canvas.toDataURL('image/png'), 'PNG', 14, y + 10, 180, 70)
     }
+    // Pie con sello de auditoria
+    doc.setFontSize(8); doc.setFont('helvetica', 'normal')
+    doc.text('SALUDCONNECT | Reporte generado automáticamente | RNF-04 + RNF-01 (cabecera de seguridad)',
+      14, 290)
     doc.save(`tendencias_${pac?.dni || 'paciente'}.pdf`)
   }
 

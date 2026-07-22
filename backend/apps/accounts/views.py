@@ -100,11 +100,23 @@ class MeView(generics.GenericAPIView):
     def get(self, request):
         return Response(UsuarioSerializer(request.user).data)
 
-    @action(detail=False, methods=["get"])
-    def mfa_setup(self, request):
-        """QR otpauth para que el usuario escanee con Google Authenticator."""
-        return Response({"otpauth_uri": request.user.otpauth_uri(),
-                         "secret": request.user.mfa_secret})
+
+class MFASetupView(generics.GenericAPIView):
+    """Devuelve el QR otpauth:// y (opcional) un codigo dev para que el usuario
+    escanee su MFA con Google Authenticator una sola vez."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        u = request.user
+        from django.conf import settings
+        uri = u.otpauth_uri()
+        # Codigo dev visible solo en DEBUG (para escanear manualmente o para la demo
+        # del docente sin necesidad de instalar Google Authenticator)
+        resp = {"otpauth_uri": uri, "secret": u.mfa_secret,
+                "mfa_enabled": u.mfa_enabled}
+        if settings.DEBUG:
+            resp["dev_code"] = u.generar_totp()
+        return Response(resp)
 
 
 class UsuarioViewSet(viewsets.ModelViewSet):
