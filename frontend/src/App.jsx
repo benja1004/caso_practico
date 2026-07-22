@@ -10,6 +10,7 @@ import Prescripciones from './pages/Prescripciones'
 import Derivaciones from './pages/Derivaciones'
 import Admin from './pages/Admin'
 import MFASetup from './pages/MFASetup'
+import VerificarQR from './pages/VerificarQR'
 
 function PrivateRoute({ children, roles }) {
   const { user } = useAuthContext()
@@ -23,6 +24,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+      <Route path="/verificar-qr" element={<VerificarQR />} />
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route index element={<Citas />} />
         <Route path="horario" element={
