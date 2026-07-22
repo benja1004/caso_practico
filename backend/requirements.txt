@@ -6,3 +6,4 @@ django-filter>=24.3
 psycopg[binary]>=3.2
 gunicorn>=22.0
 pyotp>=2.9
+reportlab>=4.0

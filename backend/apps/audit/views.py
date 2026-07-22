@@ -15,11 +15,21 @@ class LogAuditoriaSerializer(serializers.ModelSerializer):
 
 class LogAuditoriaViewSet(viewsets.ReadOnlyModelViewSet):
     """RF-07: auditoria inmutable (solo lectura, solo admin)."""
-    queryset = LogAuditoria.objects.all()
     serializer_class = LogAuditoriaSerializer
-    permission_classes = [IsAdminRole]
     filterset_fields = ["usuario", "accion", "modelo_afectado"]
     search_fields = ["usuario", "modelo_afectado", "detalle"]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return [IsAuthenticated()]
+        return [IsAdminRole()]
+
+    def get_queryset(self):
+        qs = LogAuditoria.objects.all()
+        user = self.request.user
+        if not user.is_anonymous and user.rol != "ADMIN":
+            qs = qs.filter(usuario=user.username, accion="NOTIF")
+        return qs
 
     @action(detail=False, methods=["post"])
     def respaldo(self, request):

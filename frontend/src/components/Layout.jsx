@@ -57,6 +57,16 @@ export default function Layout() {
             link: '/derivaciones'
           }))
         }
+        // Notificaciones de auditoria (notif) para el usuario actual
+        try {
+          const n = await api('/admin-panel/auditoria/?accion=NOTIF&usuario=' + user.username)
+          ;(n.results || n).forEach((x) => items.push({
+            id: 'n' + x.id, tipo: 'notif', icon: '🔔',
+            texto: x.detalle, link: '/derivaciones'
+          }))
+        } catch (e) {
+          console.error("Error cargando notificaciones:", e)
+        }
         const nuevas = items.length
         if (nuevas > vistas) {
           // Notificacion del navegador (si el usuario ya autorizo)

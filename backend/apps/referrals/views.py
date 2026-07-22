@@ -29,6 +29,16 @@ class DerivacionViewSet(viewsets.ModelViewSet):
             qs = qs.filter(paciente__usuario=u)
         return qs
 
+    def perform_create(self, serializer):
+        deriv = serializer.save()
+        if deriv.especialista_destino:
+            from apps.audit.models import LogAuditoria
+            LogAuditoria.objects.create(
+                usuario=deriv.especialista_destino.username,
+                accion="NOTIF", modelo_afectado="Derivacion", objeto_id=deriv.pk,
+                ip_address=None, detalle=f"Nueva derivación #{deriv.pk} recibida."
+            )
+
     @action(detail=True, methods=["post"])
     def cambiar_estado(self, request, pk=None):
         deriv = self.get_object()
@@ -38,6 +48,15 @@ class DerivacionViewSet(viewsets.ModelViewSet):
         deriv.estado = nuevo
         deriv.fecha_respuesta = timezone.now()
         deriv.save()
+
+        # Notificar al creador de la derivación
+        from apps.audit.models import LogAuditoria
+        LogAuditoria.objects.create(
+            usuario=deriv.medico_origen.username,
+            accion="NOTIF", modelo_afectado="Derivacion", objeto_id=deriv.pk,
+            ip_address=None, detalle=f"Derivación #{deriv.pk} cambió a: {nuevo}"
+        )
+
         return Response(DerivacionSerializer(deriv).data)
 
     @action(detail=True, methods=["post"])
