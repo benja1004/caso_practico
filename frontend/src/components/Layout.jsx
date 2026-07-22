@@ -5,6 +5,7 @@ import { api } from '../services/api'
 
 const NAV = [
   { to: '/', label: 'Citas', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/pacientes', label: 'Pacientes', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
   { to: '/monitoreo', label: 'Monitoreo', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
   { to: '/dashboard', label: 'Mis tendencias', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
   { to: '/horario', label: 'Mi Horario', roles: ['MEDICO', 'ADMIN'] },
