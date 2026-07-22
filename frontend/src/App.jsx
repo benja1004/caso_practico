@@ -10,6 +10,7 @@ import Prescripciones from './pages/Prescripciones'
 import Derivaciones from './pages/Derivaciones'
 import Admin from './pages/Admin'
 import MFASetup from './pages/MFASetup'
+import Pacientes from './pages/Pacientes'
 
 function PrivateRoute({ children, roles }) {
   const { user } = useAuthContext()
@@ -30,6 +31,7 @@ export default function App() {
         } />
         <Route path="monitoreo" element={<Monitoreo />} />
         <Route path="dashboard" element={<Dashboard />} />
+        <Route path="pacientes" element={<Pacientes />} />
         <Route path="prescripciones" element={<Prescripciones />} />
         <Route path="derivaciones" element={<Derivaciones />} />
         <Route path="mfa-setup" element={<MFASetup />} />
