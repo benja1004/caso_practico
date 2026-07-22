@@ -103,7 +103,7 @@ export default function Prescripciones() {
           <div className="sub">Recetas con firma simulada (SHA-256) y código QR de verificación.</div>
         </div>
         <button className="btn btn-outline btn-grande" onClick={() => abrirVerificador('')}>
-          🔍 Verificar receta por QR
+          Verificar receta por QR
         </button>
       </div>
       {msg && <div className="ok-banner">{msg}</div>}
@@ -184,7 +184,7 @@ export default function Prescripciones() {
           onClick={(e) => e.target === e.currentTarget && cerrarVerificador()}>
           <div className="modal">
             <div className="modal-head">
-              <h2>🔍 Verificar autenticidad de receta</h2>
+              <h2>Verificar autenticidad de receta</h2>
               <button className="modal-close" onClick={cerrarVerificador}>✕</button>
             </div>
             <div className="modal-body">
@@ -205,7 +205,7 @@ export default function Prescripciones() {
                     {verificarResultado.vigente
                       ? <span className="badge estado-CONFIRMADA">VIGENTE</span>
                       : <span className="badge estado-CANCELADA">VENCIDA</span>}
-                    <b style={{ color: '#16a34a' }}>Receta auténtica verificada ✓</b>
+                    <b style={{ color: '#16a34a' }}>Receta auténtica verificada</b>
                   </div>
                   <div className="info-grid">
                     <div className="item"><div className="k">Código</div><div className="v">{verificarResultado.receta.codigo_verificacion}</div></div>

@@ -52,14 +52,14 @@ export default function VerificarQR() {
   return (
     <div style={{ maxWidth: 650, margin: '2rem auto', padding: '1.5rem', background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', borderRadius: '16px', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.07)', border: '1px solid rgba(255, 255, 255, 0.18)' }}>
       <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-        <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#1e293b' }}>🔍 Verificar Receta Médica</h1>
+        <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#1e293b' }}>Verificar Receta Médica</h1>
         <p style={{ color: '#64748b', fontSize: '0.95rem', marginTop: '0.4rem' }}>
           Escanea el código QR de la receta con tu cámara o digita el código de verificación manualmente.
         </p>
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem', overflow: 'hidden', borderRadius: '12px' }}>
-        <h3 style={{ margin: '0 0 0.8rem 0', fontSize: '1rem', color: '#334155' }}>📷 Escanear con Cámara</h3>
+        <h3 style={{ margin: '0 0 0.8rem 0', fontSize: '1rem', color: '#334155' }}>Escanear con Cámara</h3>
         <div style={{ borderRadius: '8px', overflow: 'hidden', background: '#000', position: 'relative', width: '100%', height: '240px' }}>
           <QrReader
             delay={500}
@@ -72,7 +72,7 @@ export default function VerificarQR() {
       </div>
 
       <div className="card" style={{ marginBottom: '1.5rem', borderRadius: '12px' }}>
-        <h3 style={{ margin: '0 0 0.8rem 0', fontSize: '1rem', color: '#334155' }}>⌨️ Verificación Manual</h3>
+        <h3 style={{ margin: '0 0 0.8rem 0', fontSize: '1rem', color: '#334155' }}>Verificación Manual</h3>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
             value={codigo}
@@ -87,7 +87,7 @@ export default function VerificarQR() {
         </div>
       </div>
 
-      {error && <div className="alerta" style={{ marginBottom: '1.5rem', padding: '0.8rem', borderRadius: '8px' }}>⚠️ {error}</div>}
+      {error && <div className="alerta" style={{ marginBottom: '1.5rem', padding: '0.8rem', borderRadius: '8px' }}>{error}</div>}
 
       {resultado && resultado.valida && (
         <div className="card" style={{ marginTop: '1.5rem', borderRadius: '12px', border: '1px solid #bbf7d0', background: 'rgba(240, 253, 244, 0.5)' }}>
@@ -97,7 +97,7 @@ export default function VerificarQR() {
             ) : (
               <span className="badge estado-CANCELADA" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}>VENCIDA</span>
             )}
-            <b style={{ color: '#16a34a', fontSize: '1.05rem' }}>✓ Receta auténtica verificada</b>
+            <b style={{ color: '#16a34a', fontSize: '1.05rem' }}>Receta auténtica verificada</b>
           </div>
 
           <div className="info-grid" style={{ gap: '10px', padding: '10px 0', borderBottom: '1px solid #e2e8f0' }}>
@@ -108,7 +108,7 @@ export default function VerificarQR() {
             <div className="item"><div className="k">Vigente hasta</div><div className="v">{new Date(resultado.receta.vigente_hasta).toLocaleDateString('es-PE')}</div></div>
           </div>
 
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '1rem', color: '#1e293b' }}>💊 Medicamentos Recetados</h3>
+          <h3 style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '1rem', color: '#1e293b' }}>Medicamentos Recetados</h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -143,7 +143,7 @@ export default function VerificarQR() {
               style={{ width: '100%' }}
               onClick={() => window.open(`/api/v1/prescripciones/${resultado.receta.id}/pdf/?codigo=${resultado.receta.codigo_verificacion}`, '_blank')}
             >
-              📥 Descargar PDF Oficial
+              Descargar PDF Oficial
             </button>
           </div>
         </div>

@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { api } from '../services/api'
 
 const NAV = [
-  { to: '/', label: 'Citas', icon: '📅', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
-  { to: '/monitoreo', label: 'Monitoreo', icon: '❤️', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
-  { to: '/dashboard', label: 'Mis tendencias', icon: '📈', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
-  { to: '/horario', label: 'Mi Horario', icon: '🗓️', roles: ['MEDICO', 'ADMIN'] },
-  { to: '/prescripciones', label: 'Prescripciones', icon: '💊', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
-  { to: '/derivaciones', label: 'Derivaciones', icon: '🔁', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
-  { to: '/admin', label: 'Administración', icon: '⚙️', roles: ['ADMIN'] },
+  { to: '/', label: 'Citas', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/monitoreo', label: 'Monitoreo', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/dashboard', label: 'Mis tendencias', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/horario', label: 'Mi Horario', roles: ['MEDICO', 'ADMIN'] },
+  { to: '/prescripciones', label: 'Prescripciones', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/derivaciones', label: 'Derivaciones', roles: ['ADMIN', 'MEDICO', 'PACIENTE'] },
+  { to: '/admin', label: 'Administración', roles: ['ADMIN'] },
 ]
 
 export default function Layout() {
@@ -25,43 +25,37 @@ export default function Layout() {
 
   const cerrarSesion = () => { logout(); navigate('/login') }
 
-  // Polling de notificaciones cada 30s: alertas sin atender + derivaciones pendientes
-  // (para medico) + citas pendientes de confirmar
   useEffect(() => {
     let timer
     const cargar = async () => {
       try {
         const items = []
-        // Citas pendientes de confirmar (medico/admin)
         if (esMedico) {
           const c = await api('/citas/?page_size=50&estado=PENDIENTE')
           ;(c.results || c).forEach((x) => items.push({
-            id: 'c' + x.id, tipo: 'cita', icon: '📅',
+            id: 'c' + x.id, tipo: 'cita',
             texto: `Cita pendiente: ${x.paciente_nombre} — ${new Date(x.fecha_hora).toLocaleString('es-PE')}`,
             link: '/'
           }))
         }
-        // Alertas no atendidas
         const a = await api('/alertas/?atendida=false&page_size=30')
         ;(a.results || a).forEach((x) => items.push({
-          id: 'a' + x.id, tipo: 'alerta', icon: '⚠️', critico: x.nivel === 'CRITICO',
+          id: 'a' + x.id, tipo: 'alerta', critico: x.nivel === 'CRITICO',
           texto: `Alerta ${x.nivel}: ${x.signo_tipo} ${x.signo_valor} — ${x.paciente}`,
           link: '/monitoreo'
         }))
-        // Derivaciones pendientes recibidas como medico
         if (esMedico) {
           const d = await api('/derivaciones/?page_size=50&estado=PENDIENTE')
           ;(d.results || d).forEach((x) => items.push({
-            id: 'd' + x.id, tipo: 'deriv', icon: '🔁',
+            id: 'd' + x.id, tipo: 'deriv',
             texto: `Derivación: ${x.paciente_nombre} → ${x.especialidad_destino_nombre}`,
             link: '/derivaciones'
           }))
         }
-        // Notificaciones de auditoria (notif) para el usuario actual
         try {
           const n = await api('/admin-panel/auditoria/?accion=NOTIF&usuario=' + user.username)
           ;(n.results || n).forEach((x) => items.push({
-            id: 'n' + x.id, tipo: 'notif', icon: '🔔',
+            id: 'n' + x.id, tipo: 'notif',
             texto: x.detalle, link: '/derivaciones'
           }))
         } catch (e) {
@@ -69,16 +63,14 @@ export default function Layout() {
         }
         const nuevas = items.length
         if (nuevas > vistas) {
-          // Notificacion del navegador (si el usuario ya autorizo)
           if ('Notification' in window && Notification.permission === 'granted' && nuevas > 0) {
             new Notification('SALUDCONNECT', { body: `Tienes ${nuevas} notificaciones nuevas.` })
           }
         }
         setNotifs(items)
         setVistas(items.length)
-      } catch (e) { /* sin sesión: ignora */ }
+      } catch (e) { /* sin sesión */ }
     }
-    // Pide permiso una vez
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission()
     cargar()
     timer = setInterval(cargar, 30000)
@@ -99,7 +91,7 @@ export default function Layout() {
             <NavLink key={n.to} to={n.to} end={n.to === '/'}
               onClick={() => setAbierto(false)}
               className={({ isActive }) => (isActive ? 'active' : '')}>
-              <span className="ic">{n.icon}</span> {n.label}
+              {n.label}
             </NavLink>
           ))}
         </nav>
@@ -115,13 +107,16 @@ export default function Layout() {
       </aside>
 
       <main className="main">
-        {/* Barra superior con campana de notificaciones */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.6rem', position: 'relative' }}>
-          <button className="btn btn-outline" style={{ position: 'relative' }} onClick={() => setNotifAbierta(!notifAbierta)}>
-            🔔
+          <button className="btn btn-outline" style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={() => setNotifAbierta(!notifAbierta)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            Notificaciones
             {noLeidas > 0 && (
               <span style={{
-                position: 'absolute', top: -6, right: -6, background: '#dc2626', color: '#fff',
+                background: '#dc2626', color: '#fff',
                 borderRadius: 999, fontSize: '0.7rem', padding: '1px 6px', fontWeight: 800
               }}>{noLeidas}</span>
             )}
@@ -132,11 +127,10 @@ export default function Layout() {
                 Notificaciones ({notifs.length})
               </h3>
               {notifs.length === 0
-                ? <div style={{ color: '#64748b', fontSize: '0.85rem', padding: 8 }}>Sin notificaciones. Todo en orden. ✓</div>
+                ? <div style={{ color: '#64748b', fontSize: '0.85rem', padding: 8 }}>Sin notificaciones pendientes.</div>
                 : notifs.map((n) => (
                   <div key={n.id} onClick={() => { navigate(n.link); setNotifAbierta(false) }}
-                    style={{ padding: '0.5rem 0.4rem', cursor: 'pointer', borderBottom: '1px dashed #e2e8f0', fontSize: '0.85rem', display: 'flex', gap: 8 }}>
-                    <span>{n.icon}</span>
+                    style={{ padding: '0.5rem 0.4rem', cursor: 'pointer', borderBottom: '1px dashed #e2e8f0', fontSize: '0.85rem' }}>
                     <span style={{ color: n.critico ? '#dc2626' : '#0f172a', fontWeight: n.critico ? 700 : 500 }}>{n.texto}</span>
                   </div>
                 ))}
@@ -144,7 +138,7 @@ export default function Layout() {
           )}
         </div>
 
-        <button className="hamburger" onClick={() => setAbierto(!abierto)}>☰ Menú</button>
+        <button className="hamburger" onClick={() => setAbierto(!abierto)}>Menú</button>
         <Outlet />
       </main>
     </div>
