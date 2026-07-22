@@ -1,4 +1,6 @@
+from datetime import date
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 
 
@@ -39,7 +41,6 @@ class Paciente(models.Model):
 
     @property
     def edad(self):
-        from datetime import date
         h = date.today()
         return (h.year - self.fecha_nacimiento.year
                 - ((h.month, h.day) < (self.fecha_nacimiento.month,
@@ -54,3 +55,6 @@ class PacienteCondicion(models.Model):
 
     class Meta:
         unique_together = ("paciente", "condicion")
+
+    def __str__(self):
+        return f"{self.paciente} — {self.condicion}"
