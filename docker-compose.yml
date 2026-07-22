@@ -18,7 +18,7 @@ services:
   backend:
     build: ./backend
     environment:
-      DJANGO_DEBUG: "0"
+      DJANGO_DEBUG: "1"
       POSTGRES_HOST: db
       POSTGRES_DB: saludconnect
       POSTGRES_USER: salud
@@ -37,7 +37,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "8080:80"
 
 volumes:
   pgdata:

@@ -9,5 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8000
-# Migraciones + seed + gunicorn (readiness: /api/v1/auth/me/ responde)
+# collectstatic + migraciones + seed + gunicorn
+RUN python manage.py collectstatic --noinput
 CMD ["sh", "-c", "python manage.py migrate && python manage.py seed; gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2"]

@@ -158,14 +158,22 @@ body {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 1.2rem;
 }
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.2rem;
 }
+.grid-wide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+.grid-wide > .card { flex: 1 1 480px; min-width: 0; }
+.grid-wide > .card-full { flex: 1 1 100%; }
 
 /* Stat cards */
 .stats {
@@ -252,16 +260,22 @@ label {
 /* ---------- Tablas ---------- */
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.88rem;
+  table-layout: auto;
 }
 th, td {
   padding: 0.55rem 0.7rem;
   border-bottom: 1px solid var(--borde);
   text-align: left;
+  vertical-align: middle;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 320px;
 }
 th {
   background: var(--azul-claro);

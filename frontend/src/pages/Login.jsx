@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuthContext } from '../context/AuthContext'
+import { setTokens } from '../services/api'
 
 // RF-01: login en 2 pasos (credenciales + token temporal MFA)
 export default function Login() {
@@ -17,8 +18,15 @@ export default function Login() {
     setError(''); setCargando(true)
     try {
       const res = await login(username, password)
-      setDevCode(res.dev_code || '') // solo en DEBUG (demo)
-      setPaso(2)
+      if (res.mfa_required === false) {
+        // Usuario sin MFA: login directo (guarda tokens y recarga)
+        setTokens(res)
+        localStorage.setItem('user', JSON.stringify(res.user))
+        window.location.reload()
+      } else {
+        setDevCode(res.dev_code || '')
+        setPaso(2)
+      }
     } catch (err) { setError(err.message) } finally { setCargando(false) }
   }
 

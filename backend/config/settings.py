@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",
     # Apps locales (segun modelo final de 20 entidades)
     "apps.accounts",        # Usuario, CentroSalud, Especialidad, PerfilMedico
     "apps.patients",        # Paciente, CondicionCronica, PacienteCondicion
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -145,6 +147,15 @@ REST_FRAMEWORK = {
         "user": "300/minute",
         "auth": "12/minute",  # login/MFA: holgado para la demo, sigue siendo estricto
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "SALUDCONNECT API",
+    "DESCRIPTION": "Portal de telemedicina para centros rurales de la sierra central.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 SIMPLE_JWT = {
